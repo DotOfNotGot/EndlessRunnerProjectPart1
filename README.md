@@ -10,7 +10,7 @@
 
 - [x]  Objects moving at set speed towards player
 - [x]  Objects getting deleted after moving past player
-- [x]  Increase speed over time
+- [x]  Objects speed increase over time
 - [x]  Points that increase over time
 - [x]  High score list
 - [x]  3 Lives per game
