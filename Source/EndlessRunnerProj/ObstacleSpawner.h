@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "ObstacleActor.h"
+#include "Tile.h"
 #include "GameFramework/Actor.h"
 #include "ActorPooler.h"
 #include "SaveGameHighscore.h"
@@ -19,57 +19,42 @@ class ENDLESSRUNNERPROJ_API AObstacleSpawner : public AActor
 {
 	GENERATED_BODY()
 
-	ActorPooler<AObstacleActor>* ObstaclePool;
+	TMap<float, TObjectPtr<ATile>> ObstacleDict;
+
+	UFUNCTION()
+	void DeleteTile(float ObstacleId);
+
+private:
+	TArray<ATile*> CurrentTiles;
+
+	void MoveTiles(float DeltaTime);
+
+	int AmountOfTilesCleared = 0;
+
+	int TilesClearedForSpeedUp = 2;
 	
-	TMap<float, TObjectPtr<AObstacleActor>> ObstacleDict;
-
-	TMap<float, TObjectPtr<AObstacleActor>> FloorDict;
-
-	UFUNCTION()
-	void ReturnObstacleToQueue(float ObstacleId);
-
-	UFUNCTION()
-	void DeleteObstacle(float ObstacleId);
-
-	UFUNCTION()
-	void DeleteFloor(float ObstacleId);
-
 public:	
 	// Sets default values for this actor's properties
 	AObstacleSpawner();
 
 	FOnScoreIncreased FOnScoreIncreased;
 
-	
 	UPROPERTY(EditAnywhere)
-	FVector MinMaxSpawnDelay;
+	TArray<TSubclassOf<ATile>> TilesToPick;
 
 	UPROPERTY(EditAnywhere)
-	FVector MinMaxSpawnPosOffset;
-	
-	UPROPERTY(BlueprintReadWrite)
-	float CurrentSpawnDelay;
+	float TileLength = 10000.0f;
 	
 	UPROPERTY(EditAnywhere)
-	FVector UniversalMovementDir;
+	float Speed;
 	
 	UPROPERTY(EditAnywhere)
-	float UniversalSpeed;
-	
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<AObstacleActor> ObstacleToSpawn;
+	ATile* StartTile;
 
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<AObstacleActor> FloorReference;
-	
-	UPROPERTY(EditAnywhere)
-	bool bUsePooling;
+	TSubclassOf<ATile> GetRandomTileToSpawn();
 	
 	UFUNCTION(BlueprintCallable)
 	void SpawnObstacle();
-
-	UFUNCTION(BlueprintCallable)
-	void SpawnFloor();
 	
 protected:
 	// Called when the game starts or when spawned
@@ -79,6 +64,8 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	float DistanceTraveled;
+	
 	int Points;
 
 	UPROPERTY(EditAnywhere, SaveGame)

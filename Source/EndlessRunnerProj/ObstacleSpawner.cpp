@@ -7,6 +7,40 @@
 #include "GameFramework/Character.h"
 #include "Kismet/GameplayStatics.h"
 
+void AObstacleSpawner::MoveTiles(float DeltaTime)
+{
+	for (int i = 0; i < CurrentTiles.Num(); i++)
+	{
+		ATile* CurrentTile = CurrentTiles[i];
+
+		if(CurrentTile == nullptr)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Tile nullptr"));
+			continue;
+		}
+		
+		CurrentTile->GetRootComponent()->SetRelativeLocation(CurrentTile->GetActorLocation() + GetActorRightVector() * Speed * DeltaTime);
+	}
+
+	DistanceTraveled += Speed * DeltaTime;
+	
+	Points = (int)(DistanceTraveled / 100);
+	FOnScoreIncreased.Broadcast(Points);
+
+	if (DistanceTraveled / TileLength > AmountOfTilesCleared)
+	{
+		SpawnObstacle();
+		if (AmountOfTilesCleared % TilesClearedForSpeedUp == 0)
+		{
+			Speed *= 1.5f;
+			TilesClearedForSpeedUp *= 2;
+		}
+		
+		AmountOfTilesCleared++;
+	}
+	
+}
+
 // Sets default values
 AObstacleSpawner::AObstacleSpawner()
 {
@@ -18,13 +52,14 @@ AObstacleSpawner::AObstacleSpawner()
 void AObstacleSpawner::BeginPlay()
 {
 	LoadHighScores();
+
+	if(StartTile != nullptr)
+	{
+		CurrentTiles.Add(StartTile);
+		ObstacleDict.Add(StartTile->GetUniqueID(), StartTile);
+		StartTile->OnObstacleReachEnd.AddDynamic(this, &AObstacleSpawner::DeleteTile);
+	}
 	
-	ObstaclePool = new ActorPooler<AObstacleActor>(GetWorld(), ObstacleToSpawn);
-
-	ObstaclePool->Populate(50);
-
-	CurrentSpawnDelay = FMath::RandRange(MinMaxSpawnDelay.X, MinMaxSpawnDelay.Y);
-
 	ACharacter* PlayerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
 
 	UHealthComponent* PlayerHealthComponent = Cast<UHealthComponent>(
@@ -38,96 +73,44 @@ void AObstacleSpawner::BeginPlay()
 	Super::BeginPlay();
 }
 
-void AObstacleSpawner::SpawnObstacle()
+TSubclassOf<ATile> AObstacleSpawner::GetRandomTileToSpawn()
 {
-	int spawnAmount = FMath::RandRange(3, 7);
+	int RandomIndex = FMath::RandRange(0, TilesToPick.Num() - 1);
 
-	Points += 100;
-	FOnScoreIncreased.Broadcast(Points);
-
-
-	if (bUsePooling)
-	{
-		for (int i = 0; i < spawnAmount; i++)
-		{
-			TObjectPtr<AObstacleActor> currentObstacle = ObstaclePool->Pop();
-			currentObstacle->OnObstacleReachEnd.AddDynamic(this, &AObstacleSpawner::ReturnObstacleToQueue);
-
-			ObstacleDict.Add(currentObstacle->GetUniqueID(), currentObstacle);
-
-			float currentSpawnPosOffset = FMath::RandRange(MinMaxSpawnPosOffset.X, MinMaxSpawnPosOffset.Y);
-
-			FVector currentPos = this->GetActorLocation();
-
-			currentObstacle->SetActorLocation(currentPos + FVector(currentSpawnPosOffset, 0, 0));
-
-			currentObstacle->MovementDir = UniversalMovementDir;
-			currentObstacle->Speed = UniversalSpeed;
-		}
-	}
-	else
-	{
-		for (int i = 0; i < spawnAmount; i++)
-		{
-			FVector currentPos = this->GetActorLocation();
-
-			float currentSpawnPosOffset = FMath::RandRange(MinMaxSpawnPosOffset.X, MinMaxSpawnPosOffset.Y);
-
-			AObstacleActor* currentObstacle = GetWorld()->SpawnActor<AObstacleActor>(
-				ObstacleToSpawn, currentPos + FVector(currentSpawnPosOffset, 0, 0), this->GetActorRotation());
-			currentObstacle->OnObstacleReachEnd.AddDynamic(this, &AObstacleSpawner::DeleteObstacle);
-
-			ObstacleDict.Add(currentObstacle->GetUniqueID(), currentObstacle);
-
-			currentObstacle->SetActorLocation(currentPos + FVector(currentSpawnPosOffset, 0, 0));
-
-			currentObstacle->MovementDir = UniversalMovementDir;
-			currentObstacle->Speed = UniversalSpeed;
-		}
-	}
-
-	UniversalSpeed += 1;
-
-	CurrentSpawnDelay = FMath::RandRange(MinMaxSpawnDelay.X, MinMaxSpawnDelay.Y);
+	return TilesToPick[RandomIndex];
 }
 
-void AObstacleSpawner::SpawnFloor()
+void AObstacleSpawner::SpawnObstacle()
 {
 	FVector currentPos = this->GetActorLocation();
 
-	AObstacleActor* currentFloor = GetWorld()->SpawnActor<AObstacleActor>(
-		FloorReference, currentPos - FVector(0, 0, 170), this->GetActorRotation());
-	currentFloor->OnObstacleReachEnd.AddDynamic(this, &AObstacleSpawner::DeleteFloor);
+	const float SpawnDistanceCorrection = AmountOfTilesCleared * TileLength - DistanceTraveled;
+	
+	ATile* CurrentObstacle = GetWorld()->SpawnActor<ATile>(
+		GetRandomTileToSpawn(), currentPos + (TileLength + SpawnDistanceCorrection) * -GetActorRightVector(), this->GetActorRotation());
+	
+	CurrentObstacle->OnObstacleReachEnd.AddDynamic(this, &AObstacleSpawner::DeleteTile);
 
-	currentFloor->MovementDir = UniversalMovementDir;
-	currentFloor->Speed = UniversalSpeed;
+	CurrentTiles.Add(CurrentObstacle);
 
-	FloorDict.Add(currentFloor->GetUniqueID(), currentFloor);
+	ObstacleDict.Add(CurrentObstacle->GetUniqueID(), CurrentObstacle);
 }
 
-void AObstacleSpawner::ReturnObstacleToQueue(float ObstacleId)
+void AObstacleSpawner::DeleteTile(float ObstacleId)
 {
-	ObstacleDict[ObstacleId]->OnObstacleReachEnd.Remove(this, "ReturnObstacleToQueue");
-	ObstaclePool->Enqueue(ObstacleDict[ObstacleId]);
-	ObstacleDict.Remove(ObstacleId);
-}
+	ObstacleDict[ObstacleId]->OnObstacleReachEnd.Remove(this, "DeleteTile");
 
-void AObstacleSpawner::DeleteObstacle(float ObstacleId)
-{
+	CurrentTiles.Remove(ObstacleDict[ObstacleId]);
+	CurrentTiles.Shrink();
+	
 	ObstacleDict[ObstacleId]->Destroy();
 	ObstacleDict.Remove(ObstacleId);
 }
 
-void AObstacleSpawner::DeleteFloor(float ObstacleId)
-{
-	FloorDict[ObstacleId]->Destroy();
-	FloorDict.Remove(ObstacleId);
-}
-
-
 // Called every frame
 void AObstacleSpawner::Tick(float DeltaTime)
 {
+	MoveTiles(DeltaTime);
 	Super::Tick(DeltaTime);
 }
 
@@ -164,7 +147,8 @@ void AObstacleSpawner::SetHighScores()
 
 void AObstacleSpawner::LoadHighScores()
 {
-	USaveGameHighscore* SaveGameInstance = Cast<USaveGameHighscore>(UGameplayStatics::LoadGameFromSlot("HighScoreSlot", 0));
+	USaveGameHighscore* SaveGameInstance = Cast<USaveGameHighscore>(
+		UGameplayStatics::LoadGameFromSlot("HighScoreSlot", 0));
 
 	HighScores = SaveGameInstance->HighScores;
 
