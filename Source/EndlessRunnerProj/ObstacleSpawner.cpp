@@ -150,7 +150,11 @@ void AObstacleSpawner::LoadHighScores()
 	USaveGameHighscore* SaveGameInstance = Cast<USaveGameHighscore>(
 		UGameplayStatics::LoadGameFromSlot("HighScoreSlot", 0));
 
-	HighScores = SaveGameInstance->HighScores;
+	if(SaveGameInstance != nullptr)
+	{
+		HighScores = SaveGameInstance->HighScores;
 
-	UE_LOG(LogTemp, Warning, TEXT("Loaded Game, High score is: %d"), HighScores[0]);
+		UE_LOG(LogTemp, Warning, TEXT("Loaded Game, High score is: %d"), HighScores[0]);
+	}
+
 }

@@ -6,6 +6,6 @@
 AMainMenuGameMode::AMainMenuGameMode()
 {
 
-	static ConstructorHelpers::FClassFinder<APawn> PlayerPawnBPClass(TEXT(""));
+	static ConstructorHelpers::FClassFinder<APawn> PlayerPawnBPClass(TEXT("/Game/ThirdPerson/Blueprints/BP_ThirdPersonCharacter"));
 	
 }

@@ -68,7 +68,7 @@
 /DBUILD_VERSION=++UE5+Release-5.1-CL-23901901
 /DBUILD_ICON_FILE_NAME="\"..\\Build\\Windows\\Resources\\Default.ico\""
 /DPROJECT_COPYRIGHT_STRING="Fill out your copyright notice in the Description page of Project Settings."
-/DPROJECT_PRODUCT_NAME="Third Person Game Template"
+/DPROJECT_PRODUCT_NAME="Endless Runner Part 1"
 /DPROJECT_PRODUCT_IDENTIFIER=EndlessRunnerProj
 /fo "C:\Users\Dot\Documents\GitHub\EndlessRunnerProjectPart1\Plugins\Developer\RiderLink\Intermediate\Build\Win64\UnrealEditor\Development\RiderLogging\Default.rc2.res"
 "..\Build\Windows\Resources\Default.rc2"

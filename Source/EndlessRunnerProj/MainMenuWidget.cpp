@@ -13,6 +13,11 @@ void UMainMenuWidget::NativeConstruct()
 	PlayerController->bShowMouseCursor = true;
 
 	USaveGameHighscore* SaveGameInstance = Cast<USaveGameHighscore>(UGameplayStatics::LoadGameFromSlot("HighScoreSlot", 0));
+
+	if(SaveGameInstance == nullptr)
+	{
+		return;
+	}
 	
 	int AmountOfScores = SaveGameInstance->HighScores.Num();
 
