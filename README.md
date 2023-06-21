@@ -1,6 +1,6 @@
-# EndlessRunnerProjectPart1
+# Endless Runner Assignment Part 2
  
- Part one of an assignment to make an endless runner in ue5 c++, for the futuregames course "Game Programming with C++".
+ Part two of an assignment to make an endless runner in ue5 c++, for the futuregames course "Game Programming with C++".
  
 ## Controls
  
@@ -16,3 +16,5 @@
 - [x]  3 Lives per game
 - [x]  Damage
 - [x]  Lose condition
+- [x]  AI that avoids obstacles
+- [x]  Obstacles having a chance to disappear on successfully dodging things
