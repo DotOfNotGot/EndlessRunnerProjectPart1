@@ -18,6 +18,15 @@ class ENDLESSRUNNERPROJ_API UMyBTTask_CheckForObstacle : public UBTTask_Blackboa
 
 	virtual void OnGameplayTaskDeactivated(UGameplayTask& Task) override;
 
+	UPROPERTY(EditAnywhere)
+	float ObstacleDistanceCheck = 1000.0f;
+	
+	UPROPERTY(EditAnywhere)
+	float SafeDistanceCheck = 1000.0f;
+	
+	UPROPERTY(EditAnywhere)
+	TArray<FVector> PossiblePositions;
+
 public:
 
 

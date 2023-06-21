@@ -17,6 +17,11 @@ UHealthComponent::UHealthComponent()
 }
 
 
+void UHealthComponent::BeginPlay()
+{
+	CurrentHealthPoints = MaxHealthPoints;
+	Super::BeginPlay();
+}
 
 void UHealthComponent::ModifyHealth(int Value)
 {

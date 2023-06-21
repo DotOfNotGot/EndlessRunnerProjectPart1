@@ -6,6 +6,9 @@
 #include "AIController.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "GameFramework/Character.h"
+#include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 void UMyBTTask_CheckForObstacle::OnGameplayTaskActivated(UGameplayTask& Task)
 {
@@ -23,23 +26,85 @@ EBTNodeResult::Type UMyBTTask_CheckForObstacle::ExecuteTask(UBehaviorTreeCompone
 
 	ACharacter* RunnerAiCharacter = Controller->GetCharacter();
 
+	FVector CastDir = FVector(0,-1, 0);
+	
 	FVector TraceStart = RunnerAiCharacter->GetActorLocation();
-	FVector TraceEnd = TraceStart + RunnerAiCharacter->GetActorForwardVector() * 2000;
+	FVector TraceEnd = TraceStart + CastDir * ObstacleDistanceCheck;
 
-	FCollisionQueryParams QueryParams;
-	QueryParams.AddIgnoredActor(RunnerAiCharacter);
+	TArray<AActor*> IgnoredActors;
 
+	IgnoredActors.Add(RunnerAiCharacter);
+	IgnoredActors.Add(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+	
 	FHitResult Hit;
 
-	GetWorld()->LineTraceSingleByChannel(Hit, TraceStart, TraceEnd, ECC_Visibility, QueryParams);
+	ETraceTypeQuery CollisionChannel = ETraceTypeQuery();
 
-	DrawDebugLine(GetWorld(), TraceStart, Hit.Location, Hit.bBlockingHit ? FColor::Blue : FColor::Red, false, 5.0f, 0, 10.0f);
-
-	FVector NewTestLocation = TraceStart - RunnerAiCharacter->GetActorRightVector() * 300;
+	FVector BoxTraceSize = FVector(100,0,0);
+	
+	UKismetSystemLibrary::BoxTraceSingle(GetWorld(), TraceStart, TraceEnd, BoxTraceSize, FRotator::ZeroRotator, CollisionChannel, false, IgnoredActors, EDrawDebugTrace::ForOneFrame,Hit, true);
 
 	
-	OwnerComp.GetBlackboardComponent()->SetValueAsVector("AvoidObstacle", NewTestLocation);
-	OwnerComp.GetBlackboardComponent()->SetValueAsBool("ShouldMove", Hit.bBlockingHit);
+	FVector NewSafePos;
+
+	if(Hit.bBlockingHit)
+	{
+		OwnerComp.GetBlackboardComponent()->SetValueAsBool("ShouldMove", true);
+
+		TArray<FVector> SafePositions;
+
+		SafePositions.Append(PossiblePositions);
+		
+		for (int i = SafePositions.Num() - 1; i >= 0; i--)
+		{
+
+			FVector HitPosYAdjusted = SafePositions[i];
+
+			FHitResult SafePosCheckHit;
+
+			if(SafePosCheckHit.bBlockingHit)
+			{
+				HitPosYAdjusted.Y = SafePosCheckHit.Location.Y;
+			}
+			else
+			{
+				HitPosYAdjusted.Y = Hit.Location.Y;
+			}
+			
+			FVector SafePosCheckStart = HitPosYAdjusted;
+			FVector SafePosCheckEnd = HitPosYAdjusted + CastDir * SafeDistanceCheck;
+			
+			FVector SafeCheckBoxTraceSize = FVector(100,0,0);
+			
+			UKismetSystemLibrary::BoxTraceSingle(GetWorld(), SafePosCheckStart, SafePosCheckEnd, SafeCheckBoxTraceSize, FRotator::ZeroRotator, CollisionChannel, false, IgnoredActors, EDrawDebugTrace::ForDuration,SafePosCheckHit, true, FLinearColor::Red, FLinearColor::Green, 1.0f);
+			
+			if(SafePosCheckHit.bBlockingHit)
+			{
+				SafePositions.RemoveAt(i);
+			}
+		}
+
+		SafePositions.Sort([TraceStart] (FVector A, FVector B)
+		{
+			return FVector::DistSquared(TraceStart, A) < FVector::DistSquared(TraceStart, B);
+		});
+
+		if(SafePositions.Num() > 0)
+		{
+			NewSafePos = SafePositions[0];
+		}
+		else
+		{
+			NewSafePos = TraceStart;
+		}
+		
+		OwnerComp.GetBlackboardComponent()->SetValueAsVector("AvoidObstacle", NewSafePos);
+		OwnerComp.GetBlackboardComponent()->SetValueAsVector("ForwardDirection", NewSafePos + CastDir);
+	}
+	else
+	{
+		OwnerComp.GetBlackboardComponent()->SetValueAsBool("ShouldMove", false);
+	}
 	
 	return Super::ExecuteTask(OwnerComp, NodeMemory);
 }

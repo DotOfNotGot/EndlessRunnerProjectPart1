@@ -20,9 +20,12 @@ public:
 
 	FOnModifyHealth FOnModifyHealth;
 
+	UPROPERTY(BlueprintAssignable)
 	FOnDeath FOnDeath;
 
 	FTimerHandle DamageCooldownTimer;
+
+	virtual void BeginPlay() override;
 	
 protected:
 	// Called when the game starts
