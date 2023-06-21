@@ -42,7 +42,7 @@ EBTNodeResult::Type UMyBTTask_CheckForObstacle::ExecuteTask(UBehaviorTreeCompone
 
 	FVector BoxTraceSize = FVector(100,0,0);
 	
-	UKismetSystemLibrary::BoxTraceSingle(GetWorld(), TraceStart, TraceEnd, BoxTraceSize, FRotator::ZeroRotator, CollisionChannel, false, IgnoredActors, EDrawDebugTrace::ForOneFrame,Hit, true);
+	UKismetSystemLibrary::BoxTraceSingle(GetWorld(), TraceStart, TraceEnd, BoxTraceSize, FRotator::ZeroRotator, CollisionChannel, false, IgnoredActors, EDrawDebugTrace::None,Hit, true);
 
 	
 	FVector NewSafePos;
@@ -76,7 +76,7 @@ EBTNodeResult::Type UMyBTTask_CheckForObstacle::ExecuteTask(UBehaviorTreeCompone
 			
 			FVector SafeCheckBoxTraceSize = FVector(100,0,0);
 			
-			UKismetSystemLibrary::BoxTraceSingle(GetWorld(), SafePosCheckStart, SafePosCheckEnd, SafeCheckBoxTraceSize, FRotator::ZeroRotator, CollisionChannel, false, IgnoredActors, EDrawDebugTrace::ForDuration,SafePosCheckHit, true, FLinearColor::Red, FLinearColor::Green, 1.0f);
+			UKismetSystemLibrary::BoxTraceSingle(GetWorld(), SafePosCheckStart, SafePosCheckEnd, SafeCheckBoxTraceSize, FRotator::ZeroRotator, CollisionChannel, false, IgnoredActors, EDrawDebugTrace::None,SafePosCheckHit, true);
 			
 			if(SafePosCheckHit.bBlockingHit)
 			{

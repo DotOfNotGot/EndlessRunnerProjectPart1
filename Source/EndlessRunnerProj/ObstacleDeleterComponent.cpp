@@ -49,7 +49,7 @@ void UObstacleDeleterComponent::GetObstacle()
 	
 	FVector BoxTraceSize = FVector(1000,0,0);
 	
-	UKismetSystemLibrary::BoxTraceMulti(GetWorld(), TraceStart, TraceEnd, BoxTraceSize, FRotator::ZeroRotator, CollisionChannel, false, IgnoredActors, EDrawDebugTrace::ForDuration,HitResults, true);
+	UKismetSystemLibrary::BoxTraceMulti(GetWorld(), TraceStart, TraceEnd, BoxTraceSize, FRotator::ZeroRotator, CollisionChannel, false, IgnoredActors, EDrawDebugTrace::None,HitResults, true);
 
 	for (int i = 0; i < HitResults.Num(); i++)
 	{

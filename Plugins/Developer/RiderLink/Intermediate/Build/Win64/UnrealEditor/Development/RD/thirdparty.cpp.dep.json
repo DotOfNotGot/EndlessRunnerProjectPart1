@@ -1,10 +1,10 @@
 {
-    "Version": "1.2",
+    "Version": "1.1",
     "Data": {
-        "Source": "c:\\users\\max.ekberg\\documents\\github\\endlessrunnerprojectpart1\\plugins\\developer\\riderlink\\source\\rd\\thirdparty\\thirdparty.cpp",
+        "Source": "c:\\users\\dot\\documents\\github\\endlessrunnerprojectpart1\\plugins\\developer\\riderlink\\source\\rd\\thirdparty\\thirdparty.cpp",
         "ProvidedModule": "",
         "Includes": [
-            "c:\\users\\max.ekberg\\documents\\github\\endlessrunnerprojectpart1\\plugins\\developer\\riderlink\\intermediate\\build\\win64\\unrealeditor\\development\\rd\\definitions.h"
+            "c:\\users\\dot\\documents\\github\\endlessrunnerprojectpart1\\plugins\\developer\\riderlink\\intermediate\\build\\win64\\unrealeditor\\development\\rd\\definitions.h"
         ],
         "ImportedModules": [],
         "ImportedHeaderUnits": []
